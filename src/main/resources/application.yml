@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: jiangsu-tax2
+  profiles:
+    active: dev
+  main:
+    banner-mode: 'OFF'
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    url: jdbc:sqlserver://58.218.183.134:36547;DatabaseName=wdgtw
+    username: wdgtw
+    password: 121212.wdgt
+  jpa:
+    database: sql_server
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    database-platform: org.hibernate.dialect.SQLServer2008Dialect
+
+app:
+  password: 12345678
+  platform-pwd: wy790124
+
+logging:
+  file:
+    name: ${spring.application.name}.log
+  level:
+    root: info
+    com.jspgjt.jiangsu.tax2: debug
+    com.jspgjt.jiangsu.tax2.repository: error
