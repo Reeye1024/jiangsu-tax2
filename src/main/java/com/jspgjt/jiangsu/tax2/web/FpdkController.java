@@ -14,6 +14,7 @@ import java.net.URLDecoder;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Created by Reeye on 2020/4/14 16:01
@@ -65,16 +66,20 @@ public class FpdkController {
             log.error("empty list~~");
             result.put("saveCount", 0);
         } else {
+            List<Fpdk> temp = new ArrayList<>();
             int saveCount = 0;
             for (Fpdk fpdk : list) {
                 try {
                     saveCount += fpdkRepo.saveOne(fpdk);
+                    temp.add(fpdk);
                 } catch (ConstraintViolationException ignored){
                 } catch (Exception e) {
                     log.error("save exception: " + e.getMessage());
                 }
             }
-            List<String> xfshs = fpdkRepo.selectXfshByExtraIsNull();
+
+//            List<String> xfshs = fpdkRepo.selectXfshByExtraIsNull();
+            List<String> xfshs = temp.stream().map(Fpdk::getXfsh).collect(Collectors.toList());
             result.put("xfshs", xfshs);
             result.put("saveCount", saveCount);
         }
