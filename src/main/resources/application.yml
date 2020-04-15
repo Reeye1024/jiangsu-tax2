@@ -15,7 +15,7 @@ spring:
     database: sql_server
     hibernate:
       ddl-auto: none
-    show-sql: true
+    show-sql: false
     database-platform: org.hibernate.dialect.SQLServer2008Dialect
 
 app:

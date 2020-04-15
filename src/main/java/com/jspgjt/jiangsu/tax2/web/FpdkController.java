@@ -1,12 +1,11 @@
 package com.jspgjt.jiangsu.tax2.web;
 
 import com.jspgjt.jiangsu.tax2.entity.Fpdk;
-import com.jspgjt.jiangsu.tax2.entity.Key3;
 import com.jspgjt.jiangsu.tax2.repository.FpdkRepo;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.UnsupportedEncodingException;
@@ -14,7 +13,6 @@ import java.net.URLDecoder;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * Created by Reeye on 2020/4/14 16:01
@@ -75,7 +73,7 @@ public class FpdkController {
                 try {
                     saveCount += fpdkRepo.saveOne(fpdk);
 //                    temp.add(fpdk);
-                } catch (ConstraintViolationException ignored){
+                } catch (DataIntegrityViolationException | ConstraintViolationException ignored){
                 } catch (Exception e) {
                     log.error("save exception: " + e.getMessage());
                 }
@@ -91,7 +89,7 @@ public class FpdkController {
 //            List<String[]> xfshs = template.query(sb.toString(), (rs ,i) -> new String[] { rs.getString("xfmc"), rs.getString("xfsh") });
         }
         List<String[]> xfshs = fpdkRepo.selectNullXfmc();
-        result.put("xfshs", xfshs);
+        result.put("xfshs", xfshs.stream().filter(s -> list.stream().anyMatch(e -> e.getXfmc().equals(s[0]) && e.getXfsh().equals(s[1]))));
         result.put("saveCount", saveCount);
         return result;
     }

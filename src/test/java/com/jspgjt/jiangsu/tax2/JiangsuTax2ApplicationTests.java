@@ -31,8 +31,13 @@ class JiangsuTax2ApplicationTests {
 //            String xfsh = m.group(1);
 //            System.out.println(xfsh);
 //        }
-        Fpdk e = new Fpdk().setFpdm("123").setFphm("456").setXfmc("aaaaa").setKprq(null);
-        System.err.println(fpdkRepo.save(e));
+        Fpdk e = new Fpdk().setFpdm("1100174160").setFphm("00381394").setXfmc("aaaaa").setKprq(null);
+        try {
+
+            System.err.println(fpdkRepo.saveOne(e));
+        } catch (Exception ee) {
+            System.out.println(ee.getClass());
+        }
 
 //        List<String[]> res = fpdkRepo.queryXfmcAndXfsh(Arrays.asList("石特阀门股份有限公司", "河北唐宋大数据产业股份有限公司"));
 //        System.out.println(new ObjectMapper().writeValueAsString(res));

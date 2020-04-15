@@ -5,6 +5,7 @@
 // @description  try to take over the world!
 // @author       Reeye
 // @match        https://fpdk.jiangsu.chinatax.gov.cn:81/main*
+// @run-at       document-end
 // @grant        none
 // ==/UserScript==
 
@@ -13,6 +14,10 @@
 
     let W = window;
     W.ck = {};
+
+    W.toast = function(msg) {
+        layer.msg(msg, {offset: '90%'});
+    }
 
     function groupBy(array, f) {
         let groups = {};
@@ -37,7 +42,8 @@
             data: JSON.stringify(data),
             dataType: 'json',
             success: function (res) {
-                Log('发送成功:' + res.saveCount);
+                toast('新增' + res.saveCount + '条数据');
+                errBreak();
                 if (res.xfshs && res.xfshs.length > 0) {
                     let groups = {};
                     res.xfshs.forEach(function (e) {
@@ -48,16 +54,12 @@
                     let xfshs = Object.keys(groups).map(function (group) {
                         return groups[group];
                     });
-                    Log('共需要获取' + xfshs.length + '个企业的详情数据');
+                    Log('共需要获取' + xfshs.length + '个企业详情数据');
                     let index = {no: 0};
                     let cert = W.ck.token.replace(/(^.*?@@)|(@@.*?$)/g, '');
                     let token = unescape(W.ck.token);
-                    let timer = Siv(() => {
-                        if (index.no >= res.xfshs.length) {
-                            clearInterval(timer);
-                            Log('获取详情数据完毕');
-                        }
-                        W.funcFpdkExtra(cert, token, xfshs[index.no++]);
+                    W.timer = Siv(() => {
+                        W.funcFpdkExtra(cert, token, xfshs[index.no++], index.no >= res.xfshs.length - 1);
                     }, 1000)
                     Log('详情timer: ' + timer);
                 } else {
@@ -66,6 +68,8 @@
             },
             error: function (data, type, err) {
                 Log('发送失败:' + err.message);
+                toast('发送失败:' + err.message);
+                errBreak(err);
             }
         });
     };
@@ -84,7 +88,7 @@
         });
     };
 
-    W.funcFpdkExtra = function (cert, token, xfsh) {
+    W.funcFpdkExtra = function (cert, token, xfsh, flag) {
         let index = {no: 0};
         let func = function (resolve, reject) {
             if (index.no >= xfsh.length) {
@@ -98,9 +102,17 @@
                     data: 'id=xfxxquery&cert=' + cert + '&token=' + token + '&xfsh=' + xfsh[i][1] + '&ymbb=' + W.ymbb,
                     dataType: "json",
                     success: function (e) {
+                        if (flag) {
+                            Log('获取详情数据完毕');
+                            clearInterval(W.timer);
+                        }
                         resolve(e);
                     },
                     error: function (data, type, err) {
+                        if (flag) {
+                            clearInterval(W.timer);
+                            Log('timer cleared');
+                        }
                         Log('数据获取失败:' + err.message);
                         resolve();
                     }
@@ -122,6 +134,10 @@
         new Promise(func).then(thenFunc).catch(failed);
     };
 
+    function errBreak(err) {
+        $('#reeye').attr('status', 'prepared').css('filter', 'none').css("cursor", "pointer");
+    }
+
     W.funcGetFpdkData = function () {
         Log('获取数据');
         let Data = [];
@@ -136,6 +152,7 @@
         let dM = d.getMonth() + 1;
         let dD = d.getDate();
         let startDate = (d.getYear() + 1900) + '-' + (dM < 10 ? '0' + dM : dM) + '-' + (dD < 10 ? '0' + dD : dD);
+        toast('设置时间:' + startDate + '至' +  endDate)
         let func = function (resolve, reject) {
             $.ajax({
                 type: "post",
@@ -158,15 +175,15 @@
             }
             page.start += 500;
             if (page.start < data.key4) {
-                return new Promise(func).then(thenFunc);
+                return new Promise(func).then(thenFunc).catch(errBreak);
             } else {
-                Log('数据获取完毕:' + Data.length);
+                toast('数据获取完毕:' + Data.length + '条');
                 if (Data.length > 0) {
                     W.sendData(Data);
                 }
             }
         };
-        new Promise(func).then(thenFunc);
+        new Promise(func).then(thenFunc).catch(errBreak);
     };
 
     W.funcFpdk = function () {
@@ -175,16 +192,33 @@
             let t = e.split('=');
             W.ck[t[0]] = t[1];
         });
-        Log('加载[发票抵扣勾选]页面');
+        toast('加载[发票抵扣勾选]页面');
         $('li[name="group_dk"]:eq(0)>a').click();
         Sto(function () {
-            //Log('点击按钮');
-            //$('#search').click();
             Sto(function () {
                 W.funcGetFpdkData();
             }, 5000)
         }, 3000)
     };
 
-    Sto(W.funcFpdk, 3000)
+    $('body').append('<div id="reeye" style="position: fixed;top: 230px;right: 10px;background: #2fb92f;cursor: pointer;padding: 10px 6px;border-radius: 4px;color: #fff;z-index: 999;" status="prepared">抓取[发票抵扣勾选]</div>');
+    $('#reeye').click(() => {
+        // document.cookie.split(/;\s*/).forEach(e => {
+        //     let t = e.split('=');
+        //     W.ck[t[0]] = t[1];
+        // });
+        // sendData([])
+        if ($('#popup_message').is(':visible') && $('#popup_message').text().indexOf('重新登录') > 0) {
+            toast('即将跳转到登录页面');
+            Sto(() => {
+                $('#popup_ok').click();
+            }, 2000);
+        } else {
+            let status = $('#reeye').attr('status');
+            if (status === 'prepared') {
+                $('#reeye').attr('status', 'running').css('filter', 'grayscale(1)').css("cursor", "not-allowed");
+                funcFpdk();
+            }
+        }
+    });
 })();

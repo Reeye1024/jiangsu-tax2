@@ -5,6 +5,7 @@
 // @description  try to take over the world!
 // @author       Reeye
 // @match        https://fpdk.jiangsu.chinatax.gov.cn:81/sigin*
+// @run-at       document-end
 // @grant        none
 // ==/UserScript==
 
@@ -18,8 +19,14 @@
     W.funcLogin = function() {
         Log('进行登录');
         $('#password').val(pwd);
-        $('#password3').val(ptpwd);
         $('#submit').click();
+        Sto(() => {
+            if (location.href.indexOf('sigin') > 0) {
+                $('#password').val(pwd);
+                $('#password3').val(ptpwd);
+                $('#submit').click();
+            }
+        }, 3000);
     }
     Sto(W.funcLogin, 3000);
 })();
