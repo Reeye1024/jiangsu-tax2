@@ -6,7 +6,7 @@ import com.jspgjt.jiangsu.tax2.repository.FpdkRepo;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.UnsupportedEncodingException;
@@ -27,16 +27,19 @@ import java.util.stream.Collectors;
 @RequestMapping("/fpdk")
 public class FpdkController {
 
-    final Pattern pattern = Pattern.compile("'((\\w|%)+3D)'");
+    private final Pattern pattern = Pattern.compile("'((\\w|%)+3D)'");
 
     @Autowired
     private FpdkRepo fpdkRepo;
 
+//    @Autowired
+//    private JdbcTemplate template;
+
     @PostMapping("/batchSave")
-    public Map<String, Object> batchSave(@RequestParam String nsrmc, @RequestBody Key3 key3) {
+    public Map<String, Object> batchSave(@RequestParam String nsrmc, @RequestBody List<String[]> aaData) {
         Map<String, Object> result = new HashMap<>();
         List<Fpdk> list = new ArrayList<>();
-        for (String[] arr : key3.getAaData()) {
+        for (String[] arr : aaData) {
             Fpdk fpdk = new Fpdk()
                     .setGrabTime(new Date())
                     .setFpdm(arr[1])
@@ -62,33 +65,40 @@ public class FpdkController {
             } catch (UnsupportedEncodingException ignored) {}
             list.add(fpdk);
         }
+        int saveCount = 0;
         if (list.isEmpty()) {
             log.error("empty list~~");
             result.put("saveCount", 0);
         } else {
-            List<Fpdk> temp = new ArrayList<>();
-            int saveCount = 0;
+//            List<Fpdk> temp = new ArrayList<>();
             for (Fpdk fpdk : list) {
                 try {
                     saveCount += fpdkRepo.saveOne(fpdk);
-                    temp.add(fpdk);
+//                    temp.add(fpdk);
                 } catch (ConstraintViolationException ignored){
                 } catch (Exception e) {
                     log.error("save exception: " + e.getMessage());
                 }
             }
 
-//            List<String> xfshs = fpdkRepo.selectXfshByExtraIsNull();
-            List<String> xfshs = temp.stream().map(Fpdk::getXfsh).collect(Collectors.toList());
-            result.put("xfshs", xfshs);
-            result.put("saveCount", saveCount);
+//            List<String> mcs = temp.stream().map(Fpdk::getXfmc).collect(Collectors.toList());
+//            StringBuilder sb = new StringBuilder("select xfmc, xfsh from fp_fpdk where xfmc not in ( ")
+//                    .append("  select distinct xfmc from fp_fpdk where nsrsbh is not null ")
+//                    .append(") and xfmc in (");
+//            for (int i = 0; i < mcs.size(); i++) {
+//                sb.append("'").append(mcs.get(i)).append("'").append(i == mcs.size() - 1 ? ")" : ",");
+//            }
+//            List<String[]> xfshs = template.query(sb.toString(), (rs ,i) -> new String[] { rs.getString("xfmc"), rs.getString("xfsh") });
         }
+        List<String[]> xfshs = fpdkRepo.selectNullXfmc();
+        result.put("xfshs", xfshs);
+        result.put("saveCount", saveCount);
         return result;
     }
 
     @PostMapping("/updateExtra")
-    public int updateExtra(@RequestParam String nsrsbh, @RequestParam  String djzt, @RequestParam  String sfztslqy, @RequestParam  String xfsh) {
-        return fpdkRepo.update(nsrsbh, djzt, "0".equals(sfztslqy) ? "否" : "是", xfsh);
+    public int updateExtra(@RequestParam String nsrsbh, @RequestParam  String djzt, @RequestParam  String sfztslqy, @RequestParam  String xfmc) {
+        return fpdkRepo.update(nsrsbh, djzt, "0".equals(sfztslqy) ? "否" : "是", xfmc);
     }
 
     private String fpzt(String code) {

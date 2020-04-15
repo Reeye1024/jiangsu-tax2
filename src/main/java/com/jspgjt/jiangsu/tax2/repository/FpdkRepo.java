@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.List;
  * Created by reeye on 2019-11-10 16:10
  * Nothing is true but improving yourself.
  */
+@Repository
 public interface FpdkRepo extends JpaRepository<Fpdk, FpId> {
 
     long countByGhdw(String ghdw);
@@ -27,10 +29,21 @@ public interface FpdkRepo extends JpaRepository<Fpdk, FpId> {
 
     @Transactional
     @Modifying(flushAutomatically = true)
-    @Query(value = "update fp_fpdk set nsrsbh=?1, djzt=?2, sfztslqy=?3 where xfsh=?4", nativeQuery = true)
-    int update(String nsrsbh, String djzt, String sfztslqy, String xfsh);
+    @Query(value = "update fp_fpdk set nsrsbh=?1, djzt=?2, sfztslqy=?3 where xfmc=?4", nativeQuery = true)
+    int update(String nsrsbh, String djzt, String sfztslqy, String xfmc);
 
-    @Query(value = "select xfsh from fp_fpdk where nsrsbh is null and xfsh is not null", nativeQuery = true)
-    List<String> selectXfshByExtraIsNull();
+    @Query(value = "select xfmc, xfsh from fp_fpdk where nsrsbh is null and xfmc not in ( " +
+            "  select distinct xfmc from fp_fpdk where nsrsbh is not null " +
+            ")", nativeQuery = true)
+    List<String[]> selectNullXfmc();
+
+    @Query(value = "select xfmc, xfsh " +
+            "from fp_fpdk " +
+            "where xfmc not in ( " +
+            "  select distinct xfmc " +
+            "  from fp_fpdk " +
+            "  where nsrsbh is not null  " +
+            ") and xfmc in :mcs", nativeQuery = true)
+    List<String[]> queryXfmcAndXfsh(@Param("mcs") List<String> mcs);
 
 }

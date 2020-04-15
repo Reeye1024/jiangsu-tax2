@@ -8,131 +8,183 @@
 // @grant        none
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
 
-    var W = window;
+    let W = window;
     W.ck = {};
 
-    W.sendData = function(nsrmc, data) {
+    function groupBy(array, f) {
+        let groups = {};
+        array.forEach(function (o) {
+            let group = JSON.stringify(f(o));
+            groups[group] = groups[group] || [];
+            groups[group].push(o);
+        });
+        return Object.keys(groups).map(function (group) {
+            return groups[group];
+        });
+    }
+
+    W.sendData = function (data) {
         Log('发送数据');
+        let nsrmc = unescape(W.ck.nsrmc)
         $.ajax({
             type: 'POST',
             url: 'http://127.0.0.1:8080/fpdk/batchSave?nsrmc=' + nsrmc,
             contentType: 'application/json',
-            timeout : 3600000, // one hour
+            timeout: 3600000, // one hour
             data: JSON.stringify(data),
             dataType: 'json',
-            success: function(res) {
+            success: function (res) {
                 Log('发送成功:' + res.saveCount);
                 if (res.xfshs && res.xfshs.length > 0) {
-                    Log('获取详情数据,共需次数: ' + res.xfshs.length);
-                    var index = { no: 0 };
-                    var cert = W.ck.token.replace(/(^.*?@@)|(@@.*?$)/g, '');
-                    var token = unescape(W.ck.token);
-                    var timer = Siv(() => {
+                    let groups = {};
+                    res.xfshs.forEach(function (e) {
+                        let group = e[0];
+                        groups[group] = groups[group] || [];
+                        groups[group].push(e);
+                    });
+                    let xfshs = Object.keys(groups).map(function (group) {
+                        return groups[group];
+                    });
+                    Log('共需要获取' + xfshs.length + '个企业的详情数据');
+                    let index = {no: 0};
+                    let cert = W.ck.token.replace(/(^.*?@@)|(@@.*?$)/g, '');
+                    let token = unescape(W.ck.token);
+                    let timer = Siv(() => {
                         if (index.no >= res.xfshs.length) {
-                        clearInterval(timer);
-                        Log('获取详情数据完毕');
-                    }
-                    W.funcFpdkExtra(cert, token, res.xfshs[index.no++]);
-                }, 1000)
+                            clearInterval(timer);
+                            Log('获取详情数据完毕');
+                        }
+                        W.funcFpdkExtra(cert, token, xfshs[index.no++]);
+                    }, 1000)
+                    Log('详情timer: ' + timer);
                 } else {
                     Log('发送完毕');
                 }
             },
-            error: function(data,type, err) {
+            error: function (data, type, err) {
                 Log('发送失败:' + err.message);
             }
         });
-    }
+    };
 
-    W.sendExtraData = function(nsrsbh, djzt, sfztslqy, xfsh) {
+    W.sendExtraData = function (nsrsbh, djzt, sfztslqy, xfmc) {
         $.ajax({
             type: 'POST',
             url: 'http://127.0.0.1:8080/fpdk/updateExtra',
-            data: {nsrsbh, djzt, sfztslqy, xfsh},
-            dataType: 'json',
-            success: function(res) {
-                if (res != 1) {
-                    Log('更新extra失败:' + xfsh);
-                }
+            data: {nsrsbh, djzt, sfztslqy, xfmc},
+            success: function (res) {
+                Log('更新extra ' + xfmc + '结果:' + res);
             },
-            error: function(data,type, err) {
+            error: function (data, type, err) {
                 Log('发送失败:' + err.message);
             }
         });
-    }
+    };
 
-    W.funcFpdkExtra = function(cert, token, xfsh) {
-        $.ajax({
-            type: "post",
-            url: "https://fpdk.jiangsu.chinatax.gov.cn:81/NSbsqWW/fpmxcx.do",
-            data: 'id=xfxxquery&cert=' + cert + '&token=' + token + '&xfsh=' + xfsh + '&ymbb=' + W.ymbb,
-            dataType: "json",
-            success: function(e) {
-                if (e.key3) {
-                    var t = e.key3.split('=');
-                    if (t && t.length == 3) {
-                        W.sendExtraData(t[2], t[0], t[1], xfsh);
-                    }
-                }
-            },
-            error: function(data,type, err) {
-                Log('数据获取失败:' + err.message);
+    W.funcFpdkExtra = function (cert, token, xfsh) {
+        let index = {no: 0};
+        let func = function (resolve, reject) {
+            if (index.no >= xfsh.length) {
+                reject()
             }
-        })
-    }
+            let i = index.no++;
+            if (xfsh[i][1]) {
+                $.ajax({
+                    type: "post",
+                    url: "https://fpdk.jiangsu.chinatax.gov.cn:81/NSbsqWW/fpmxcx.do",
+                    data: 'id=xfxxquery&cert=' + cert + '&token=' + token + '&xfsh=' + xfsh[i][1] + '&ymbb=' + W.ymbb,
+                    dataType: "json",
+                    success: function (e) {
+                        resolve(e);
+                    },
+                    error: function (data, type, err) {
+                        Log('数据获取失败:' + err.message);
+                        resolve();
+                    }
+                })
+            }
+        };
+        let failed = function (err) {
+        };
+        let thenFunc = function (data) {
+            if (data.key3 != null) {
+                let t = data.key3.split('=');
+                if (t && (t.length === 3)) {
+                    W.sendExtraData(t[2], t[0], t[1], xfsh[index.no - 1][0]);
+                }
+            } else {
+                return new Promise(func).then(thenFunc).catch(failed);
+            }
+        };
+        new Promise(func).then(thenFunc).catch(failed);
+    };
 
-    W.funcGetFpdkData = function() {
+    W.funcGetFpdkData = function () {
         Log('获取数据');
-        W.DATA = '';
-        var cert = W.ck.token.replace(/(^.*?@@)|(@@.*?$)/g, '');
-        var now = new Date();
-        var year = now.getYear() + 1900;
-        var month = now.getMonth() + 1;
-        var day = new Date(year, month, 0).getDate();
-        var endDate = year + '-' + (month < 10 ? '0' + month : month) + '-' + (day < 10 ? '0' + day : day);
-        var d = new Date(now.getTime() - 1000*3600*24*359);
-        var dM = d.getMonth() + 1;
-        var dD = d.getDate();
-        var startDate = (d.getYear() + 1900) + '-' + (dM < 10 ? '0' + dM : dM) + '-' + (dD < 10 ? '0' + dD : dD);
-        (function req(start) {
+        let Data = [];
+        let page = {start: 0, size: 500};
+        let cert = W.ck.token.replace(/(^.*?@@)|(@@.*?$)/g, '');
+        let now = new Date();
+        let year = now.getYear() + 1900;
+        let month = now.getMonth() + 1;
+        let day = new Date(year, month, 0).getDate();
+        let endDate = year + '-' + (month < 10 ? '0' + month : month) + '-' + (day < 10 ? '0' + day : day);
+        let d = new Date(now.getTime() - 1000 * 3600 * 24 * 359);
+        let dM = d.getMonth() + 1;
+        let dD = d.getDate();
+        let startDate = (d.getYear() + 1900) + '-' + (dM < 10 ? '0' + dM : dM) + '-' + (dD < 10 ? '0' + dD : dD);
+        let func = function (resolve, reject) {
             $.ajax({
                 type: "post",
                 url: "https://fpdk.jiangsu.chinatax.gov.cn:81/NSbsqWW/dkgx.do",
-                data: 'id=dkgxquery&fpdm=&fphm=&rq_q=' + startDate + '&rq_z=' + endDate + '&xfsbh=&rzzt=0&glzt=0&fpzt=0&fplx=01&cert=' + cert + '&token=' + unescape(W.ck.token) + '&aoData=%5B%7B%22name%22:%22iDisplayStart%22,%22value%22:' + start + '%7D,%7B%22name%22:%22iDisplayLength%22,%22value%22:1000%7D%5D&ymbb=' + W.ymbb,
+                data: 'id=dkgxquery&fpdm=&fphm=&rq_q=' + startDate + '&rq_z=' + endDate + '&xfsbh=&rzzt=0&glzt=0&fpzt=0&fplx=01&cert=' + cert + '&token=' + unescape(W.ck.token) + '&aoData=%5B%7B%22name%22:%22iDisplayStart%22,%22value%22:' + page.start + '%7D,%7B%22name%22:%22iDisplayLength%22,%22value%22:' + page.size + '%7D%5D&ymbb=' + W.ymbb,
                 dataType: "json",
-                success: function(e) {
-                    Log('数据获取成功:' + e.key3.aaData.length);
-                    W.sendData(unescape(W.ck.nsrmc), e.key3);
-                    start += 1000
-                    if (start < e.key4) {
-                        req(start)
-                    }
+                success: function (data) {
+                    resolve(data);
                 },
-                error: function(data,type, err) {
+                error: function (data, type, err) {
                     Log('数据获取失败:' + err.message);
+                    reject(err);
                 }
             })
-        }(0))
-    }
+        };
+        let thenFunc = function (data) {
+            Log('数据获取成功:' + data.key3.aaData.length);
+            if (data.key3 && data.key3.aaData && data.key3.aaData.length > 0) {
+                Data = Data.concat(data.key3.aaData)
+            }
+            page.start += 500;
+            if (page.start < data.key4) {
+                return new Promise(func).then(thenFunc);
+            } else {
+                Log('数据获取完毕:' + Data.length);
+                if (Data.length > 0) {
+                    W.sendData(Data);
+                }
+            }
+        };
+        new Promise(func).then(thenFunc);
+    };
 
-    W.funcFpdk = function() {
+    W.funcFpdk = function () {
         Log('获取cookie');
         document.cookie.split(/;\s*/).forEach(e => {
-            var t = e.split('=');
-        W.ck[t[0]] = t[1];
-    });
+            let t = e.split('=');
+            W.ck[t[0]] = t[1];
+        });
         Log('加载[发票抵扣勾选]页面');
         $('li[name="group_dk"]:eq(0)>a').click();
-        Sto(function() {
+        Sto(function () {
             //Log('点击按钮');
             //$('#search').click();
-            Sto(function() {
+            Sto(function () {
                 W.funcGetFpdkData();
             }, 5000)
         }, 3000)
-    }
+    };
+
     Sto(W.funcFpdk, 3000)
 })();
