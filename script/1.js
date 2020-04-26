@@ -14,10 +14,10 @@
     window.Log = console.log;
     window.Sto = setTimeout;
     window.Siv = setInterval;
-    window.onload = () => {
+    document.addEventListener('DOMContentLoaded', () => {
         var layerScript = document.createElement("script");
         layerScript.setAttribute('type', 'text/javascript');
         layerScript.setAttribute('src', 'https://reeye.cn/layer/layer.js');
         document.body.appendChild(layerScript)
-    }
+    });
 })();

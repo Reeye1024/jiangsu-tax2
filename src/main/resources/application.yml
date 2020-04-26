@@ -29,3 +29,4 @@ logging:
     root: error
     com.jspgjt.jiangsu.tax2: debug
     com.jspgjt.jiangsu.tax2.repository: error
+    org.hibernate.engine.jdbc.spi.SqlExceptionHelper: off

@@ -20,7 +20,7 @@ class JiangsuTax2ApplicationTests {
     @Autowired
     private FpdkRepo fpdkRepo;
 
-    @Rollback(false)
+//    @Rollback(false)
     @Transactional
     @Test
     void contextLoads() throws Exception {
@@ -31,16 +31,18 @@ class JiangsuTax2ApplicationTests {
 //            String xfsh = m.group(1);
 //            System.out.println(xfsh);
 //        }
-        Fpdk e = new Fpdk().setFpdm("1100174160").setFphm("00381394").setXfmc("aaaaa").setKprq(null);
-        try {
-
-            System.err.println(fpdkRepo.saveOne(e));
-        } catch (Exception ee) {
-            System.out.println(ee.getClass());
-        }
+//        Fpdk e = new Fpdk().setFpdm("1100174160").setFphm("00381394").setXfmc("aaaaa").setKprq(null);
+//        try {
+//
+//            System.err.println(fpdkRepo.saveOne(e));
+//        } catch (Exception ee) {
+//            System.out.println(ee.getClass());
+//        }
 
 //        List<String[]> res = fpdkRepo.queryXfmcAndXfsh(Arrays.asList("石特阀门股份有限公司", "河北唐宋大数据产业股份有限公司"));
 //        System.out.println(new ObjectMapper().writeValueAsString(res));
+
+//        System.out.println(fpdkRepo.updateXfshNull("1Qqb8rmf0pcQYljH%2BWwwOZozAbEyiIPJ3usOIvchEEY%3D"));
     }
 
 }

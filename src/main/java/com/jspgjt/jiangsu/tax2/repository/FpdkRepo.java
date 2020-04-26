@@ -32,7 +32,7 @@ public interface FpdkRepo extends JpaRepository<Fpdk, FpId> {
     @Query(value = "update fp_fpdk set nsrsbh=?1, djzt=?2, sfztslqy=?3 where xfmc=?4", nativeQuery = true)
     int update(String nsrsbh, String djzt, String sfztslqy, String xfmc);
 
-    @Query(value = "select xfmc, xfsh from fp_fpdk where nsrsbh is null and xfsh is not null and xfmc not in (select distinct xfmc from fp_fpdk where nsrsbh is not null)", nativeQuery = true)
+    @Query(value = "select xfmc, xfsh, fpdm, fphm from fp_fpdk where nsrsbh is null and xfsh is not null and xfmc not in (select distinct xfmc from fp_fpdk where nsrsbh is not null)", nativeQuery = true)
     List<String[]> selectNullXfmc();
 
     @Query(value = "select xfmc, xfsh " +
@@ -43,5 +43,10 @@ public interface FpdkRepo extends JpaRepository<Fpdk, FpId> {
             "  where nsrsbh is not null  " +
             ") and xfmc in :mcs", nativeQuery = true)
     List<String[]> queryXfmcAndXfsh(@Param("mcs") List<String> mcs);
+
+    @Transactional
+    @Modifying
+    @Query(value = "update fp_fpdk set xfsh=null where xfsh=?1 and nsrsbh is null", nativeQuery = true)
+    int updateXfshNull(String xfsh);
 
 }
