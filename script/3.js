@@ -17,7 +17,7 @@
 
     W.toast = function(msg) {
         layer.msg(msg, {offset: '90%'});
-    }
+    };
 
     function groupBy(array, f) {
         let groups = {};
@@ -33,7 +33,7 @@
 
     W.sendData = function (data) {
         Log('发送数据');
-        let nsrmc = unescape(W.ck.nsrmc)
+        let nsrmc = unescape(W.ck.nsrmc);
         $.ajax({
             type: 'POST',
             url: 'http://127.0.0.1:8080/fpdk/batchSave?nsrmc=' + nsrmc,
@@ -60,7 +60,7 @@
                     let token = unescape(W.ck.token);
                     W.timer = Siv(() => {
                         W.funcFpdkExtra(cert, token, xfshs[index.no++], index.no >= res.xfshs.length - 1);
-                    }, 1000)
+                    }, 1000);
                     Log('详情timer: ' + timer);
                 } else {
                     Log('发送完毕');
