@@ -26,6 +26,6 @@ logging:
   file:
     name: ${spring.application.name}.log
   level:
-    root: info
+    root: error
     com.jspgjt.jiangsu.tax2: debug
     com.jspgjt.jiangsu.tax2.repository: error

@@ -43,6 +43,7 @@
             dataType: 'json',
             success: function (res) {
                 toast('新增' + res.saveCount + '条数据');
+                Log('新增' + res.saveCount + '条数据');
                 errBreak();
                 if (res.xfshs && res.xfshs.length > 0) {
                     let groups = {};
@@ -67,7 +68,7 @@
                 }
             },
             error: function (data, type, err) {
-                Log('发送失败:' + err.message);
+                Log('发送失败:', data, type, err);
                 toast('发送失败:' + err.message);
                 errBreak(err);
             }
