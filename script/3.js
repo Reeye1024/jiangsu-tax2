@@ -17,7 +17,7 @@
 
     W.toast = function(msg) {
         layer.msg(msg, {offset: '90%'});
-    };
+    }
 
     function groupBy(array, f) {
         let groups = {};
@@ -33,7 +33,7 @@
 
     W.sendData = function (data) {
         Log('发送数据');
-        let nsrmc = unescape(W.ck.nsrmc);
+        let nsrmc = unescape(W.ck.nsrmc)
         $.ajax({
             type: 'POST',
             url: 'http://127.0.0.1:8080/fpdk/batchSave?nsrmc=' + nsrmc,
@@ -61,7 +61,7 @@
                     let token = unescape(W.ck.token);
                     W.timer = Siv(() => {
                         W.funcFpdkExtra(cert, token, xfshs[index.no++], index.no >= res.xfshs.length - 1);
-                    }, 1000);
+                    }, 1000)
                     Log('详情timer: ' + timer);
                 } else {
                     Log('发送完毕');
@@ -202,7 +202,8 @@
         }, 3000)
     };
 
-    $('body').append('<div id="reeye" style="position: fixed;top: 230px;right: 10px;background: #2fb92f;cursor: pointer;padding: 10px 6px;border-radius: 4px;color: #fff;z-index: 999;" status="prepared">抓取[发票抵扣勾选]</div>');
+    $('body').append('<div id="reeye" style="position: fixed;top: 230px;right: 10px;background: #2fb92f;cursor: pointer;padding: 10px 6px;border-radius: 4px;color: #fff;z-index: 999;" status="prepared">立即抓取[发票抵扣勾选]</div>');
+    $('body').append('<div id="reeye2" style="position: fixed;top: 275px;right: 10px;background: #2fb92f;cursor: pointer;padding: 10px 6px;border-radius: 4px;color: #fff;z-index: 999;" status="prepared">定时抓取[发票抵扣勾选]</div>');
     $('#reeye').click(() => {
         // document.cookie.split(/;\s*/).forEach(e => {
         //     let t = e.split('=');
@@ -222,4 +223,26 @@
             }
         }
     });
+
+    var schedule = localStorage.getItem('schedule');
+    $('#reeye2').text(schedule ? '已开启定时抓取:' + schedule + '分钟' : '定时抓取[发票抵扣勾选]');
+    $('#reeye2').click(() => {
+        if ($('#reeye2').text().indexOf('已开启') === 0) {
+            localStorage.removeItem('schedule');
+            $('#reeye2').text('定时抓取[发票抵扣勾选]');
+            toast('已关闭定时抓取');
+        } else {
+            schedule = 60;
+            localStorage.setItem('schedule', schedule);
+            $('#reeye2').text('已开启定时抓取:' + schedule + '分钟');
+            toast('已开启定时抓取:' + schedule + '分钟，请保持自动登录脚本打开');
+            Sto(() => {
+                quit();
+                Sto(() => { $('#popup_ok').click() }, 300);
+            }, 1000 * 60 * parseInt(schedule));
+        }
+    });
+    if (schedule) {
+        $('#reeye').click();
+    }
 })();
