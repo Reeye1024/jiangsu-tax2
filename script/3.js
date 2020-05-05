@@ -156,12 +156,13 @@
         let Data = [];
         let page = {start: 0, size: 500};
         let cert = W.ck.token.replace(/(^.*?@@)|(@@.*?$)/g, '');
-        let now = new Date();
-        let year = now.getYear() + 1900;
-        let month = now.getMonth() + 1;
-        let day = new Date(year, month, 0).getDate();
+        let ssq = $('#ssq').text();
+        let year = parseInt(ssq);
+        let month = parseInt(ssq.substring(5));
+        let eDate = new Date(year, month, 0);
+        let day = eDate.getDate();
         let endDate = year + '-' + (month < 10 ? '0' + month : month) + '-' + (day < 10 ? '0' + day : day);
-        let d = new Date(now.getTime() - 1000 * 3600 * 24 * 359);
+        let d = new Date(new Date().getTime() - 1000 * 3600 * 24 * 359);
         let dM = d.getMonth() + 1;
         let dD = d.getDate();
         let startDate = (d.getYear() + 1900) + '-' + (dM < 10 ? '0' + dM : dM) + '-' + (dD < 10 ? '0' + dD : dD);
@@ -175,7 +176,7 @@
             $.ajax({
                 type: "post",
                 url: "https://fpdk.jiangsu.chinatax.gov.cn:81/NSbsqWW/dkgx.do",
-                data: other + '&rq_q=' + startDate + '&rq_z=' + endDate + '&xfsbh=&rzzt=0&glzt=0&fpzt=0&fplx=01&cert=' + cert + '&token=' + unescape(W.ck.token) + '&aoData=%5B%7B%22name%22:%22iDisplayStart%22,%22value%22:' + page.start + '%7D,%7B%22name%22:%22iDisplayLength%22,%22value%22:' + page.size + '%7D%5D&ymbb=' + W.ymbb,
+                data: other + '&rq_q=' + startDate + '&rq_z=' + endDate + '&xfsbh=&rzzt=0&glzt=0&fpzt=0&fplx=01&cert=' + cert + '&token=' + unescape(W.ck.token) + '&aoData=%5B%7B%22name%22%3A%22sEcho%22%2C%22value%22%3A1%7D%2C%7B%22name%22%3A%22iColumns%22%2C%22value%22%3A15%7D%2C%7B%22name%22%3A%22sColumns%22%2C%22value%22%3A%22%2C%2C%2C%2C%2C%2C%2C%2C%2C%2C%2C%2C%2C%2C%22%7D%2C%7B%22name%22%3A%22iDisplayStart%22%2C%22value%22%3A' + page.start + '%7D%2C%7B%22name%22%3A%22iDisplayLength%22%2C%22value%22%3A' + page.size + '%7D%2C%7B%22name%22%3A%22mDataProp_0%22%2C%22value%22%3A0%7D%2C%7B%22name%22%3A%22mDataProp_1%22%2C%22value%22%3A1%7D%2C%7B%22name%22%3A%22mDataProp_2%22%2C%22value%22%3A2%7D%2C%7B%22name%22%3A%22mDataProp_3%22%2C%22value%22%3A3%7D%2C%7B%22name%22%3A%22mDataProp_4%22%2C%22value%22%3A4%7D%2C%7B%22name%22%3A%22mDataProp_5%22%2C%22value%22%3A5%7D%2C%7B%22name%22%3A%22mDataProp_6%22%2C%22value%22%3A6%7D%2C%7B%22name%22%3A%22mDataProp_7%22%2C%22value%22%3A7%7D%2C%7B%22name%22%3A%22mDataProp_8%22%2C%22value%22%3A8%7D%2C%7B%22name%22%3A%22mDataProp_9%22%2C%22value%22%3A9%7D%2C%7B%22name%22%3A%22mDataProp_10%22%2C%22value%22%3A10%7D%2C%7B%22name%22%3A%22mDataProp_11%22%2C%22value%22%3A11%7D%2C%7B%22name%22%3A%22mDataProp_12%22%2C%22value%22%3A12%7D%2C%7B%22name%22%3A%22mDataProp_13%22%2C%22value%22%3A13%7D%2C%7B%22name%22%3A%22mDataProp_14%22%2C%22value%22%3A14%7D%5D&ymbb=' + W.ymbb,
                 dataType: "json",
                 success: function (data) {
                     if (dd) {
