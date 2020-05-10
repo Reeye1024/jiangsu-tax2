@@ -49,4 +49,7 @@ public interface FpdkRepo extends JpaRepository<Fpdk, FpId> {
     @Query(value = "update fp_fpdk set xfsh=null where xfsh=?1 and nsrsbh is null", nativeQuery = true)
     int updateXfshNull(String xfsh);
 
+    @Query(value = "select xfmc, fpdm, fphm from fp_fpdk where nsrsbh is null", nativeQuery = true)
+    List<String[]> queryXfmcByNsrsbhIsNull();
+
 }

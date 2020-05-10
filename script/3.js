@@ -33,31 +33,52 @@
                 toast('新增' + res.saveCount + '条数据');
                 Log('新增' + res.saveCount + '条数据');
                 $('#reeye').attr('status', 'prepared').css('filter', 'none').css("cursor", "pointer");
-                // if (res.xfshs && res.xfshs.length > 0) {
-                //     let groups = {};
-                //     res.xfshs.forEach(function (e) {
-                //         let group = e[0];
-                //         groups[group] = groups[group] || [];
-                //         groups[group].push(e);
-                //     });
-                //     let xfshs = Object.keys(groups).map(function (group) {
-                //         return groups[group];
-                //     });
-                //     Log('共需要获取' + xfshs.length + '个企业详情数据');
-                //     // let index = {no: 0};
-                //     // let cert = W.ck.token.replace(/(^.*?@@)|(@@.*?$)/g, '');
-                //     // let token = unescape(W.ck.token);
-                //     // W.timer = Siv(() => {
-                //     //     W.funcFpdkExtra(cert, token, xfshs[index.no++], index.no >= res.xfshs.length - 1);
-                //     // }, 1000);
-                //     // Log('详情timer: ' + timer);
-                //     xfshs.forEach(e => {
-                //         Log('single search: ' + e[0][0]);
-                //         W.funcGetFpdkData(e[0]);
-                //     })
-                // } else {
-                //     Log('发送完毕');
-                // }
+                if (res.xfshs && res.xfshs.length > 0) {
+                    let groups = {};
+                    res.xfshs.forEach(function (e) {
+                        let group = e[0];
+                        groups[group] = groups[group] || [];
+                        groups[group].push(e);
+                    });
+                    let xfshs = Object.keys(groups).map(function (group) {
+                        return groups[group];
+                    });
+                    toast('共需要获取' + xfshs.length + '个企业详情数据');
+                    let index = {no: 0};
+                    W.timer = Siv(() => {
+                        let xfsh = xfshs[index.no++];
+                        let rd = Math.floor(Math.random() * xfsh.length);
+                        let fp = xfsh[rd];
+                        $('#fpdm').val(fp[1]);
+                        $('#fphm').val(fp[2]);
+                        searchfpGx();
+                        Sto(() => {
+                            if ($('#example>tbody>tr').length === 1) {
+                                $('#example>tbody>tr:eq(0)>td:eq(14)>a').click();
+                                Sto(() => {
+                                    let nsrsbh = $('#fpmxtab span#xfsh').text();
+                                    let xfmc = $('#fpmxtab span#xfmc').text();
+                                    let djzt = $('#fpmxtab span#djzt').text();
+                                    let ztsl = $('#fpmxtab span#ztsl').text();
+                                    closeFpmxMask();
+                                    if (nsrsbh) {
+                                        W.sendExtraData(nsrsbh, djzt, ztsl, xfmc);
+                                    }
+                                }, 3000);
+                            } else {
+                                $('#popup_ok').click();
+                            }
+                        }, 2000);
+                    }, 6000);
+                    toast('详情timer: ' + timer);
+                    Sto(() => {
+                        clearInterval(timer);
+                        Log('清除timer');
+                        toast('清除timer');
+                    }, 6000 * xfshs.length + 1000);
+                } else {
+                    toast('发送完毕');
+                }
             },
             error: function (data, type, err) {
                 Log('发送失败:', data, type, err);
@@ -149,6 +170,8 @@
         $('#reeye').attr('status', 'prepared').css('filter', 'none').css("cursor", "pointer");
     }
 
+
+
     W.funcGetFpdkData = function (dd) {
         if (!dd) {
             Log('获取数据');
@@ -166,6 +189,8 @@
         let dM = d.getMonth() + 1;
         let dD = d.getDate();
         let startDate = (d.getYear() + 1900) + '-' + (dM < 10 ? '0' + dM : dM) + '-' + (dD < 10 ? '0' + dD : dD);
+        $('#sjq').val(startDate);
+        $('#sjz').val(endDate);
         if (!dd) {
             toast('设置时间:' + startDate + '至' +  endDate)
         }
@@ -266,7 +291,7 @@
             $('#reeye2').text('定时抓取[发票抵扣勾选]');
             toast('已关闭定时抓取');
         } else {
-            schedule = 60;
+            schedule = 120;
             localStorage.setItem('schedule', schedule);
             $('#reeye2').text('已开启定时抓取:' + schedule + '分钟');
             toast('已开启定时抓取:' + schedule + '分钟，请保持自动登录脚本打开');

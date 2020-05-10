@@ -88,7 +88,7 @@ public class FpdkController {
 //            }
 //            List<String[]> xfshs = template.query(sb.toString(), (rs ,i) -> new String[] { rs.getString("xfmc"), rs.getString("xfsh") });
         }
-        List<String[]> xfshs = fpdkRepo.selectNullXfmc();
+        List<String[]> xfshs = fpdkRepo.queryXfmcByNsrsbhIsNull();
 //        result.put("xfshs", xfshs.stream().filter(s -> list.stream().anyMatch(e -> e.getXfmc().equals(s[0]) && e.getXfsh().equals(s[1]))));
         result.put("xfshs", xfshs);
         result.put("saveCount", saveCount);
@@ -96,8 +96,8 @@ public class FpdkController {
     }
 
     @PostMapping("/updateExtra")
-    public int updateExtra(@RequestParam String nsrsbh, @RequestParam  String djzt, @RequestParam  String sfztslqy, @RequestParam  String xfmc) {
-        return fpdkRepo.update(nsrsbh, djzt, "0".equals(sfztslqy) ? "否" : "是", xfmc);
+    public int updateExtra(@RequestParam String nsrsbh, @RequestParam String djzt, @RequestParam String sfztslqy, @RequestParam String xfmc) {
+        return fpdkRepo.update(nsrsbh, djzt, sfztslqy, xfmc);
     }
 
     @PostMapping("/updateXfshNull")

@@ -23,8 +23,8 @@ app:
   platform-pwd: wy790124
 
 logging:
-  file:
-    name: ${spring.application.name}.log
+#  file:
+#    name: ${spring.application.name}.log
   level:
     root: error
     com.jspgjt.jiangsu.tax2: debug

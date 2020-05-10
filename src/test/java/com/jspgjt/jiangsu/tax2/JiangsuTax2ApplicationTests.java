@@ -45,4 +45,17 @@ class JiangsuTax2ApplicationTests {
 //        System.out.println(fpdkRepo.updateXfshNull("1Qqb8rmf0pcQYljH%2BWwwOZozAbEyiIPJ3usOIvchEEY%3D"));
     }
 
+    public static void main(String[] args) {
+        System.out.println(search(new int[] {1,2,3,5}, 4, 10));
+    }
+
+    static int search (int[] numbers, int value, int from) {
+        if (from == numbers.length)
+            return -1;
+        if (value == numbers[from])
+            return from;
+        else
+            return search(numbers, value, from + 1);
+    }
+
 }
