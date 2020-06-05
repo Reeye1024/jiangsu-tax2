@@ -75,6 +75,7 @@
                         clearInterval(timer);
                         Log('清除timer');
                         toast('清除timer');
+                        funcWdgxrq();
                     }, 6000 * xfshs.length + 1000);
                 } else {
                     toast('发送完毕');
@@ -86,6 +87,81 @@
                 errBreak(err);
             }
         });
+    };
+
+    W.funcWdgxrq = function() {
+        if ($('#wdqpcx').css('display') === 'block') {
+            Log('获取cookie');
+            document.cookie.split(/;\s*/).forEach(e => {
+                let t = e.split('=');
+                W.ck[t[0]] = t[1];
+            });
+            $('#wdqpcx>a').click();
+            Sto(() => {
+                searchInfo();
+                Sto(() => {
+                    let match = $('#example_info').text().match(/共\s*(\d+)\s*条/);
+                    if (match && match[1]) {
+                        let total = parseInt(match[1]);
+                        Log('未到勾选日期发票数量为' + total);
+                        if (total <= 0) {
+                            return;
+                        }
+                        let maxPage = total / 50 + (total % 50 > 0 ? 1 : 0);
+                        let index = {no: 0};
+                        var list = [];
+                        let getData = function() {
+                            $('table#example>tbody>tr').each((i, e) => {
+                                var t = [];
+                                $(e).children('td').each((i1, e1) => {
+                                    t.push($(e1).text());
+                                });
+                                list.push(t);
+                            });
+                        };
+                        let func = function (resolve, reject) {
+                            index.no++;
+                            if (index.no !== 1 && index.no <= maxPage) {
+                                $('#example_next').click();
+                                Sto(() => {
+                                    getData();
+                                    resolve();
+                                }, 3000);
+                            } else {
+                                getData();
+                                resolve();
+                            }
+                        };
+                        let thenFunc = function () {
+                            if (list.length < total) {
+                                return new Promise(func).then(thenFunc).catch(failed);
+                            } else {
+                                Log('发送[未到勾选日期发票]数据');
+                                let nsrmc = unescape(W.ck.nsrmc);
+                                $.ajax({
+                                    type: 'POST',
+                                    url: 'http://127.0.0.1:8080/wdgxrqfp/batchSave?nsrmc=' + nsrmc,
+                                    contentType: 'application/json',
+                                    timeout: 100000,
+                                    data: JSON.stringify(list),
+                                    dataType: 'json',
+                                    success: function (res) {
+                                        toast('[未到勾选日期发票]新增' + res.count + '条数据');
+                                    },
+                                    error: function (data, type, err) {
+                                        Log('[未到勾选日期发票]发送失败:', data, type, err);
+                                        toast('发送失败:' + err.message);
+                                        errBreak(err);
+                                    }
+                                });
+                            }
+                        };
+                        let failed = function (err) {};
+                        new Promise(func).then(thenFunc).catch(failed);
+                    }
+                }, 1000);
+            }, 3000);
+        }
     };
 
     W.sendExtraData = function (nsrsbh, djzt, sfztslqy, xfmc) {
@@ -169,8 +245,6 @@
         Log('errBreak():' + JSON.stringify(err));
         $('#reeye').attr('status', 'prepared').css('filter', 'none').css("cursor", "pointer");
     }
-
-
 
     W.funcGetFpdkData = function (dd) {
         if (!dd) {
@@ -260,15 +334,9 @@
 
     $('body').append('<div id="reeye" style="position: fixed;top: 230px;right: 10px;background: #2fb92f;cursor: pointer;padding: 10px 6px;border-radius: 4px;color: #fff;z-index: 999;" status="prepared">立即抓取[发票抵扣勾选]</div>');
     $('body').append('<div id="reeye2" style="position: fixed;top: 275px;right: 10px;background: #2fb92f;cursor: pointer;padding: 10px 6px;border-radius: 4px;color: #fff;z-index: 999;" status="prepared">定时抓取[发票抵扣勾选]</div>');
+    $('body').append('<div onclick="funcWdgxrq()" style="position: fixed;top: 320px;right: 10px;background: #2fb92f;cursor: pointer;padding: 10px 6px;border-radius: 4px;color: #fff;z-index: 999;" status="prepared">立即抓取[未到勾选日期发票]</div>');
+
     $('#reeye').click(() => {
-        // document.cookie.split(/;\s*/).forEach(e => {
-        //     let t = e.split('=');
-        //     W.ck[t[0]] = t[1];
-        // });
-        // $('li[name="group_dk"]:eq(0)>a').click();
-        // Sto(function () {
-        //     sendData([])
-        // }, 2000)
         if ($('#popup_message').is(':visible') && $('#popup_message').text().indexOf('重新登录') > 0) {
             toast('即将跳转到登录页面');
             Sto(() => {
